@@ -14,6 +14,8 @@ export type Note = {
   user_id: string;
   title: string;
   content: string;
+  is_public: boolean;
   created_at: string;
   updated_at: string;
+  author_email?: string; // Campo virtual para mostrar el email del autor
 };

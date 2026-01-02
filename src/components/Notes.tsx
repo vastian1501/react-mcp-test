@@ -12,12 +12,18 @@ export const Notes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'cards'>('grid');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const [fontSize, setFontSize] = useState(parseInt(localStorage.getItem('fontSize') || '16'));
 
   useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getUser();
     fetchNotes();
   }, []);
 
@@ -35,11 +41,22 @@ export const Notes: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('notes')
-        .select('*')
+        .select(`
+          *,
+          users (
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotes(data || []);
+
+      const formattedNotes = (data || []).map((n: any) => ({
+        ...n,
+        author_email: n.users?.email
+      }));
+
+      setNotes(formattedNotes);
     } catch (err: any) {
       console.error('Error fetching notes:', err.message);
     } finally {
@@ -47,12 +64,17 @@ export const Notes: React.FC = () => {
     }
   };
 
-  const handleSaveNote = async (title: string, content: string) => {
+  const handleSaveNote = async (title: string, content: string, is_public: boolean) => {
     try {
       if (editingNote) {
         const { error } = await supabase
           .from('notes')
-          .update({ title, content, updated_at: new Date().toISOString() })
+          .update({
+            title,
+            content,
+            is_public,
+            updated_at: new Date().toISOString()
+          })
           .eq('id', editingNote.id);
         if (error) throw error;
       } else {
@@ -61,7 +83,7 @@ export const Notes: React.FC = () => {
 
         const { error } = await supabase
           .from('notes')
-          .insert([{ title, content, user_id: user.id }]);
+          .insert([{ title, content, is_public, user_id: user.id }]);
         if (error) throw error;
       }
       setIsEditorOpen(false);
@@ -95,7 +117,7 @@ export const Notes: React.FC = () => {
           <StickyNote size={40} className="text-primary" />
           Notes
         </h1>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div className="header-actions" style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="toolbar">
             <div className="toggle-group">
               <button
@@ -162,7 +184,8 @@ export const Notes: React.FC = () => {
           </div>
 
           <button
-            style={{ width: 'auto', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
+            className="primary-btn"
+            style={{ width: 'auto', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
             onClick={() => {
               setEditingNote(null);
               setIsEditorOpen(true);
@@ -197,6 +220,7 @@ export const Notes: React.FC = () => {
               <NoteCard
                 key={note.id}
                 note={note}
+                currentUserId={currentUser?.id || null}
                 onEdit={(n) => {
                   setEditingNote(n);
                   setIsEditorOpen(true);

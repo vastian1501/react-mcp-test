@@ -4,33 +4,55 @@ import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { X, Save, Eye, Edit2 } from 'lucide-react';
+import { X, Save, Eye, Edit2, Bold, Italic, Heading2, Code, List as ListIcon } from 'lucide-react';
 
 interface NoteEditorProps {
   note?: Note | null;
-  onSave: (title: string, content: string) => void;
+  onSave: (title: string, content: string, is_public: boolean) => void;
   onClose: () => void;
 }
 
 export const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, onClose }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [is_public, setIsPublic] = useState(false);
   const [mode, setMode] = useState<'edit' | 'preview'>('edit');
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      setIsPublic(note.is_public || false);
     } else {
       setTitle('');
       setContent('');
+      setIsPublic(false);
     }
   }, [note]);
+
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = content.substring(start, end);
+    const newText = content.substring(0, start) + prefix + selectedText + suffix + content.substring(end);
+
+    setContent(newText);
+
+    // Devolvemos el foco y ajustamos la selección
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onSave(title, content);
+      onSave(title, content, is_public);
     }
   };
 
@@ -86,9 +108,21 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, onClose })
           </div>
 
           <div className="input-group">
-            <label>Content (Markdown supported)</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{ marginBottom: 0 }}>Content (Markdown supported)</label>
+              {mode === 'edit' && (
+                <div className="markdown-toolbar" style={{ display: 'flex', gap: '4px' }}>
+                  <button type="button" className="icon-btn" onClick={() => insertMarkdown('**', '**')} title="Bold"><Bold size={16} /></button>
+                  <button type="button" className="icon-btn" onClick={() => insertMarkdown('*', '*')} title="Italic"><Italic size={16} /></button>
+                  <button type="button" className="icon-btn" onClick={() => insertMarkdown('## ')} title="Heading 2"><Heading2 size={16} /></button>
+                  <button type="button" className="icon-btn" onClick={() => insertMarkdown('`', '`')} title="Code"><Code size={16} /></button>
+                  <button type="button" className="icon-btn" onClick={() => insertMarkdown('- ')} title="List"><ListIcon size={16} /></button>
+                </div>
+              )}
+            </div>
             {mode === 'edit' ? (
               <textarea
+                ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="What's on your mind? Use Markdown for formatting!"
@@ -114,6 +148,17 @@ export const NoteEditor: React.FC<NoteEditorProps> = ({ note, onSave, onClose })
                 )}
               </div>
             )}
+          </div>
+          <div className="input-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={is_public}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                style={{ width: 'auto', marginBottom: 0 }}
+              />
+              Public Note (Visible to everyone)
+            </label>
           </div>
 
           <div className="modal-actions">

@@ -421,3 +421,68 @@ textarea:focus {
 .toggle-item:hover:not(.active) {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* Markdown Toolbar extra styles */
+.markdown-toolbar .icon-btn {
+  padding: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .notes-container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .notes-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .notes-header h1 {
+    font-size: 2rem !important;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .notes-header h1 {
+    font-size: 1.75rem !important;
+  }
+
+  .toggle-item {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .notes-container {
+    padding: 16px;
+  }
+
+  .note-card {
+    padding: 16px;
+  }
+}
