@@ -1,8 +1,9 @@
 import React from 'react';
 import type { Note } from '../lib/supabase';
-
 import { Trash2, Edit3, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface NoteCardProps {
   note: Note;
@@ -29,7 +30,9 @@ export const NoteCard: React.FC<NoteCardProps> = ({ note, onEdit, onDelete }) =>
       onClick={() => onEdit(note)}
     >
       <h3 className="note-title">{note.title}</h3>
-      <p className="note-content">{note.content}</p>
+      <div className="note-content markdown-content">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
+      </div>
 
       <div className="note-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
