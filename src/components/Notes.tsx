@@ -4,7 +4,7 @@ import type { Note } from '../lib/supabase';
 
 import { NoteCard } from './NoteCard';
 import { NoteEditor } from './NoteEditor';
-import { Plus, LogOut, Search, StickyNote } from 'lucide-react';
+import { Plus, LogOut, Search, StickyNote, Grid, List, Layout, Moon, Sun, Sparkles, Type } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const Notes: React.FC = () => {
@@ -13,10 +13,23 @@ export const Notes: React.FC = () => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'cards'>('grid');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [fontSize, setFontSize] = useState(parseInt(localStorage.getItem('fontSize') || '16'));
 
   useEffect(() => {
     fetchNotes();
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--font-size', `${fontSize}px`);
+    localStorage.setItem('fontSize', fontSize.toString());
+  }, [fontSize]);
 
   const fetchNotes = async () => {
     try {
@@ -82,7 +95,72 @@ export const Notes: React.FC = () => {
           <StickyNote size={40} className="text-primary" />
           Notes
         </h1>
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div className="toolbar">
+            <div className="toggle-group">
+              <button
+                className={`toggle-item ${theme === 'light' ? 'active' : ''}`}
+                onClick={() => setTheme('light')}
+                title="Light Mode"
+              >
+                <Sun size={18} />
+              </button>
+              <button
+                className={`toggle-item ${theme === 'dark' ? 'active' : ''}`}
+                onClick={() => setTheme('dark')}
+                title="Dark Mode"
+              >
+                <Moon size={18} />
+              </button>
+              <button
+                className={`toggle-item ${theme === 'premium' ? 'active' : ''}`}
+                onClick={() => setTheme('premium')}
+                title="Premium Mode"
+              >
+                <Sparkles size={18} />
+              </button>
+            </div>
+
+            <div className="toggle-group">
+              <button
+                className={`toggle-item ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid View"
+              >
+                <Grid size={18} />
+              </button>
+              <button
+                className={`toggle-item ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List View"
+              >
+                <List size={18} />
+              </button>
+              <button
+                className={`toggle-item ${viewMode === 'cards' ? 'active' : ''}`}
+                onClick={() => setViewMode('cards')}
+                title="Card View"
+              >
+                <Layout size={18} />
+              </button>
+            </div>
+
+            <div className="toggle-group">
+              <div className="toggle-item" style={{ gap: '8px', cursor: 'default' }}>
+                <Type size={18} />
+                <input
+                  type="range"
+                  min="12"
+                  max="24"
+                  value={fontSize}
+                  onChange={(e) => setFontSize(parseInt(e.target.value))}
+                  style={{ width: '80px', height: '4px', padding: 0 }}
+                />
+                <span style={{ fontSize: '0.75rem', width: '24px' }}>{fontSize}</span>
+              </div>
+            </div>
+          </div>
+
           <button
             style={{ width: 'auto', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px' }}
             onClick={() => {
@@ -113,7 +191,7 @@ export const Notes: React.FC = () => {
       {loading ? (
         <div className="text-center" style={{ padding: '40px' }}>Loading notes...</div>
       ) : (
-        <motion.div layout className="notes-grid">
+        <motion.div layout className={`notes-grid view-${viewMode}`}>
           <AnimatePresence>
             {filteredNotes.map((note) => (
               <NoteCard
